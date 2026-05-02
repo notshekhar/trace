@@ -1,8 +1,9 @@
 import axios, { AxiosError } from "axios";
-import { unstable_cache } from "next/cache";
 
 // Axios client for oboe-backend trace API under `/internal/v1/trace/*`
 // (Basic Auth — server-only env, never NEXT_PUBLIC_*).
+// Caching lives in oboe-backend (in-memory CacheableMemory). Trace pages are
+// rendered dynamically and just hit the backend each time.
 
 export interface Article {
     id: string;
@@ -59,8 +60,6 @@ const BASE = (
     "http://localhost:3000"
 ).replace(/\/+$/, "");
 
-const REVALIDATE_SECONDS = 600;
-
 const internalUser = process.env.INTERNAL_BASIC_AUTH_USER ?? "trace";
 const internalPass = process.env.INTERNAL_BASIC_AUTH_PASSWORD ?? "";
 
@@ -103,7 +102,6 @@ class NotFoundError extends Error {
 }
 
 // ---- Raw fetchers ---------------------------------------------------------
-// Throw on connection failure so unstable_cache does NOT cache the failure.
 
 async function fetchEdition(path: string): Promise<EditionPayload> {
     try {
@@ -141,23 +139,9 @@ async function fetchArchive(): Promise<EditionSummary[]> {
     return data.data.editions ?? [];
 }
 
-// ---- Cached + safe wrappers ----------------------------------------------
-// unstable_cache only stores the resolved value, so connection errors thrown
-// above never poison the cache. We then degrade gracefully outside the cache.
-
-const cachedEdition = (path: string, key: string) =>
-    unstable_cache(() => fetchEdition(path), ["trace-api", "edition", key], {
-        revalidate: REVALIDATE_SECONDS,
-    });
-
-const cachedArticle = (id: string) =>
-    unstable_cache(() => fetchArticle(id), ["trace-api", "article", id], {
-        revalidate: REVALIDATE_SECONDS,
-    });
-
-const cachedArchive = unstable_cache(fetchArchive, ["trace-api", "archive"], {
-    revalidate: REVALIDATE_SECONDS,
-});
+// ---- Safe wrappers --------------------------------------------------------
+// Caching is handled by oboe-backend; we only translate errors here and fall
+// back gracefully on connection failures.
 
 function isNotFound(e: unknown): e is NotFoundError {
     return e instanceof Error && (e as { _trace_not_found?: true })._trace_not_found === true;
@@ -175,7 +159,7 @@ export function getTodayEditionDate(): string {
 export async function getToday(): Promise<EditionPayload | null> {
     const date = getTodayEditionDate();
     try {
-        return await cachedEdition("/today", `today:${date}`)();
+        return await fetchEdition("/today");
     } catch (e) {
         if (isNotFound(e)) return emptyEdition(date, true);
         if (isConnectionError(e)) {
@@ -189,10 +173,7 @@ export async function getToday(): Promise<EditionPayload | null> {
 export async function getEdition(date: string): Promise<EditionPayload | null> {
     const today = getTodayEditionDate();
     try {
-        return await cachedEdition(
-            `/editions/${encodeURIComponent(date)}`,
-            date,
-        )();
+        return await fetchEdition(`/editions/${encodeURIComponent(date)}`);
     } catch (e) {
         if (isNotFound(e)) return null;
         if (isConnectionError(e)) {
@@ -205,7 +186,7 @@ export async function getEdition(date: string): Promise<EditionPayload | null> {
 
 export async function getArticle(id: string): Promise<ArticlePayload | null> {
     try {
-        return await cachedArticle(id)();
+        return await fetchArticle(id);
     } catch (e) {
         if (isNotFound(e)) return null;
         if (isConnectionError(e)) {
@@ -218,7 +199,7 @@ export async function getArticle(id: string): Promise<ArticlePayload | null> {
 
 export async function getArchive(): Promise<EditionSummary[]> {
     try {
-        return await cachedArchive();
+        return await fetchArchive();
     } catch (e) {
         if (isConnectionError(e)) {
             logConn("/archive", e);

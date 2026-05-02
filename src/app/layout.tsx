@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader, Inter } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
-import { ThemeProvider } from "./providers";
+import { PostHogProvider, ThemeProvider } from "./providers";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -35,7 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={`${newsreader.variable} ${inter.variable}`}>
         <NextTopLoader color="var(--accent)" showSpinner={false} />
-        <ThemeProvider>{children}</ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
