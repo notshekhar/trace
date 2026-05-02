@@ -1,0 +1,18 @@
+{
+  "name": "trace-scraper",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "drizzle-orm": "latest",
+    "fast-xml-parser": "latest",
+    "cheerio": "latest",
+    "@anthropic-ai/sdk": "latest"
+  },
+  "devDependencies": {
+    "drizzle-kit": "latest"
+  }
+}
