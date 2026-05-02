@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import type { ScrapedArticle } from "./types";
+import type { ScrapedArticle, ScrapedHotLink } from "./types";
 
 function getDb(): Database {
   const dbPath = process.env.DATABASE_URL ?? "../trace.db";
@@ -24,6 +24,19 @@ function getDb(): Database {
       date TEXT PRIMARY KEY,
       published INTEGER DEFAULT 0,
       article_count INTEGER DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS hot_links (
+      id TEXT PRIMARY KEY,
+      source TEXT NOT NULL,
+      title TEXT NOT NULL,
+      url TEXT NOT NULL,
+      external_id TEXT,
+      score INTEGER,
+      comments INTEGER,
+      byline TEXT,
+      edition_date TEXT NOT NULL,
+      scraped_at TEXT NOT NULL,
+      UNIQUE(source, external_id, edition_date)
     );
   `);
   return db;
@@ -74,6 +87,42 @@ export function saveArticles(scrapedArticles: ScrapedArticle[]): void {
   });
 
   insertMany(scrapedArticles);
+  db.close();
+}
+
+export function saveHotLinks(date: string, links: ScrapedHotLink[]): void {
+  if (links.length === 0) return;
+  const db = getDb();
+
+  // Replace today's hot links for that source so we always show fresh top N
+  const sources = [...new Set(links.map((l) => l.source))];
+  const del = db.prepare(`DELETE FROM hot_links WHERE edition_date = ? AND source = ?`);
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO hot_links
+      (id, source, title, url, external_id, score, comments, byline, edition_date, scraped_at)
+    VALUES
+      ($id, $source, $title, $url, $externalId, $score, $comments, $byline, $editionDate, $scrapedAt)
+  `);
+
+  const tx = db.transaction(() => {
+    for (const s of sources) del.run(date, s);
+    for (const l of links) {
+      insert.run({
+        $id: l.id,
+        $source: l.source,
+        $title: l.title,
+        $url: l.url,
+        $externalId: l.externalId ?? null,
+        $score: l.score ?? null,
+        $comments: l.comments ?? null,
+        $byline: l.byline ?? null,
+        $editionDate: l.editionDate,
+        $scrapedAt: l.scrapedAt,
+      });
+    }
+  });
+
+  tx();
   db.close();
 }
 

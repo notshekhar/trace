@@ -1,32 +1,58 @@
 import Link from "next/link";
-import { SourceTag } from "@/components/ui/SourceTag";
 import type { Article } from "@/lib/db/schema";
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "numeric", minute: "2-digit", hour12: true,
-  });
+const SOURCE_DISPLAY: Record<string, string> = {
+  cnn: "CNN",
+  bbc: "BBC",
+  guardian: "The Guardian",
+  reuters: "Reuters",
+  ap: "AP News",
+  techcrunch: "TechCrunch",
+  theverge: "The Verge",
+  wired: "Wired",
+  arstechnica: "Ars Technica",
+  dailydev: "daily.dev",
+  espn: "ESPN",
+  bbcsport: "BBC Sport",
+  bloomberg: "Bloomberg",
+  forbes: "Forbes",
+  politico: "Politico",
+  npr: "NPR",
+};
+
+interface Props {
+  articles: Article[];
+  title?: string;
 }
 
-export function TrendingSidebar({ articles }: { articles: Article[] }) {
+export function TrendingSidebar({ articles, title = "Trending" }: Props) {
+  if (articles.length === 0) return null;
+
   return (
-    <aside className="flex flex-col gap-1">
-      <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3">
-        Trending Stories
-      </h3>
-      {articles.map((article, i) => (
-        <Link key={article.id} href={`/article/${article.id}`} className="group flex gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-900 -mx-2 px-2 rounded transition-colors">
-          <span className="text-xl font-bold text-gray-200 dark:text-gray-700 tabular-nums leading-none pt-1 w-6 shrink-0" style={{ fontFamily: "var(--font-inter-var), system-ui, sans-serif" }}>
-            {String(i + 1).padStart(2, "0")}
-          </span>
-          <div className="flex flex-col gap-1 min-w-0">
-            <p className="text-sm font-semibold leading-snug group-hover:text-accent transition-colors line-clamp-2" style={{ fontFamily: "var(--font-playfair-var), Georgia, serif" }}>
-              {article.title}
-            </p>
-            <SourceTag source={article.source} time={formatTime(article.scrapedAt)} />
-          </div>
-        </Link>
-      ))}
-    </aside>
+    <div>
+      <p className="eyebrow mb-5">{title}</p>
+      <ol className="flex flex-col">
+        {articles.map((article, i) => (
+          <li
+            key={article.id}
+            className="border-t border-rule first:border-t-0 py-3.5"
+          >
+            <Link href={`/article/${article.id}`} className="group flex gap-3">
+              <span className="text-[11px] font-medium tabular-nums text-subtle pt-0.5 w-5 shrink-0">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div className="min-w-0 flex flex-col gap-1.5">
+                <p className="font-serif-display text-[14px] leading-[1.35] tracking-[-0.005em] text-foreground/90 group-hover:text-muted transition-colors line-clamp-3">
+                  {article.title}
+                </p>
+                <span className="text-[10px] font-medium tracking-[0.14em] uppercase text-subtle">
+                  {SOURCE_DISPLAY[article.source] ?? article.source}
+                </span>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

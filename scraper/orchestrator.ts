@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
 import { categorize } from "./categorizer";
-import { saveArticles } from "./db";
+import { saveArticles, saveHotLinks } from "./db";
 import { summarizeArticle } from "./summarizer";
+import { scrapeHackerNews } from "./sources/hackernews";
 import type { RawArticle, ScrapedArticle } from "./types";
 import { CnnSource } from "./sources/cnn";
 import { BbcSource } from "./sources/bbc";
@@ -35,6 +36,10 @@ function getTomorrow(): string {
   return d.toISOString().split("T")[0];
 }
 
+function getToday(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
 async function enrichWithAi(raw: RawArticle, index: number): Promise<ScrapedArticle> {
   const aiResult = await summarizeArticle(raw.title, raw.summary);
   return {
@@ -51,6 +56,17 @@ async function enrichWithAi(raw: RawArticle, index: number): Promise<ScrapedArti
     scrapedAt: new Date().toISOString(),
     isFeatured: index === 0,
   };
+}
+
+async function scrapeHotLinksOnce(): Promise<void> {
+  try {
+    const today = getToday();
+    const links = await scrapeHackerNews(today, 12);
+    saveHotLinks(today, links);
+    console.log(`[scraper] hackernews: ${links.length} hot links`);
+  } catch (err) {
+    console.error(`[scraper] hackernews failed:`, err);
+  }
 }
 
 export async function runScrape(): Promise<void> {
@@ -71,6 +87,8 @@ export async function runScrape(): Promise<void> {
       }
     })
   );
+
+  await scrapeHotLinksOnce();
 
   const failed = results.filter((r) => r.status === "rejected").length;
   if (failed > 0) console.warn(`[scraper] ${failed} sources failed`);

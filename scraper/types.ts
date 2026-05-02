@@ -23,3 +23,16 @@ export interface ScrapedArticle {
   scrapedAt: string;
   isFeatured: boolean;
 }
+
+export interface ScrapedHotLink {
+  id: string;
+  source: string;
+  title: string;
+  url: string;
+  externalId?: string;
+  score?: number;
+  comments?: number;
+  byline?: string;
+  editionDate: string;
+  scrapedAt: string;
+}

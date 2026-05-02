@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAllPublishedEditions } from "@/lib/db/queries";
-import { CATEGORIES } from "@/types";
 
 export const revalidate = 86400;
 
@@ -10,12 +9,10 @@ export async function GET() {
 
   const urls = [
     `<url><loc>${baseUrl}</loc><changefreq>daily</changefreq></url>`,
-    ...editions.flatMap((ed) => [
-      `<url><loc>${baseUrl}/edition/${ed.date}</loc><changefreq>daily</changefreq><lastmod>${ed.date}</lastmod></url>`,
-      ...CATEGORIES.map(
-        (cat) => `<url><loc>${baseUrl}/edition/${ed.date}/${cat}</loc><changefreq>daily</changefreq><lastmod>${ed.date}</lastmod></url>`
-      ),
-    ]),
+    `<url><loc>${baseUrl}/archive</loc><changefreq>daily</changefreq></url>`,
+    ...editions.map(
+      (ed) => `<url><loc>${baseUrl}/edition/${ed.date}</loc><changefreq>daily</changefreq><lastmod>${ed.date}</lastmod></url>`
+    ),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
