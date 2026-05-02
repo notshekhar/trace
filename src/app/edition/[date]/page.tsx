@@ -1,7 +1,7 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { EditionView } from "@/components/edition/EditionView";
-import { getEdition, getTodayEditionDate } from "@/lib/db/queries";
+import { getTodayEditionDate } from "@/lib/api";
 
 export const revalidate = 3600;
 
@@ -20,12 +20,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function EditionPage({ params }: Props) {
   const { date } = await params;
-  const today = getTodayEditionDate();
-
-  if (date === today) redirect("/");
-
-  const edition = await getEdition(date);
-  if (!edition || !edition.published) notFound();
-
+  if (date === getTodayEditionDate()) redirect("/");
   return <EditionView date={date} />;
 }

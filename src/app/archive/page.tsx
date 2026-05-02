@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageShell } from "@/components/layout/PageShell";
-import { getEditionSummaries } from "@/lib/db/queries";
+import { getArchive } from "@/lib/api";
 
 export const revalidate = 3600;
 
@@ -29,7 +29,7 @@ function longDate(date: string): string {
 }
 
 export default async function ArchivePage() {
-  const editions = await getEditionSummaries();
+  const editions = await getArchive();
 
   const grouped: Record<string, typeof editions> = {};
   for (const ed of editions) {

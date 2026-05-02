@@ -1,8 +1,9 @@
-import type { Article } from "@/lib/db/schema";
+import type { Article } from "@/lib/api";
 
 export function generateRssFeed(articles: Article[], baseUrl: string): string {
-  const items = articles
-    .map((a) => `
+    const items = articles
+        .map(
+            (a) => `
     <item>
       <title><![CDATA[${a.title}]]></title>
       <link>${a.url}</link>
@@ -11,10 +12,11 @@ export function generateRssFeed(articles: Article[], baseUrl: string): string {
       <category>${a.category}</category>
       <pubDate>${new Date(a.scrapedAt).toUTCString()}</pubDate>
       ${a.imageUrl ? `<enclosure url="${a.imageUrl}" type="image/jpeg" length="0"/>` : ""}
-    </item>`)
-    .join("\n");
+    </item>`,
+        )
+        .join("\n");
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
+    return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Trace — Daily News</title>

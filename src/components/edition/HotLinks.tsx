@@ -1,4 +1,4 @@
-import type { HotLink } from "@/lib/db/schema";
+import type { HotLink } from "@/lib/api";
 
 interface Props {
   links: HotLink[];

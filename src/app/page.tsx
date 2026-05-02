@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { EditionView } from "@/components/edition/EditionView";
-import { getTodayEditionDate } from "@/lib/db/queries";
+import { getTodayEditionDate } from "@/lib/api";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 
 export const metadata: Metadata = {
   title: "Trace — Today",
@@ -10,6 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  const today = getTodayEditionDate();
-  return <EditionView date={today} />;
+  return <EditionView date={getTodayEditionDate()} isToday />;
 }

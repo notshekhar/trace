@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Article } from "@/lib/db/schema";
+import type { Article } from "@/lib/api";
 
 const SOURCE_DISPLAY: Record<string, string> = {
   cnn: "CNN",

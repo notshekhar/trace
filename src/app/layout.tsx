@@ -17,9 +17,16 @@ const inter = Inter({
   display: "swap",
 });
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://trace.news";
+
 export const metadata: Metadata = {
   title: "Trace — The daily edition",
   description: "A calm, readable daily edition of the news.",
+  alternates: {
+    types: {
+      "application/rss+xml": `${baseUrl}/rss.xml`,
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

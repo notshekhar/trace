@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Article } from "@/lib/db/schema";
+import type { Article } from "@/lib/api";
 import { CopyLinkButton } from "./CopyLinkButton";
 
 const SOURCE_DISPLAY: Record<string, string> = {
@@ -30,15 +30,6 @@ function formatTime(iso: string): string {
   });
 }
 
-function parseTakeaways(raw: string | null | undefined): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((p) => typeof p === "string") : [];
-  } catch {
-    return [];
-  }
-}
 
 interface Props {
   article: Article;
@@ -50,7 +41,7 @@ interface Props {
 
 export function ArticleEntry({ article, variant = "lead", linked = true }: Props) {
   const summary = article.summaryAi ?? article.summary;
-  const takeaways = parseTakeaways(article.keyTakeaways);
+  const takeaways = article.keyTakeaways;
   const source = SOURCE_DISPLAY[article.source] ?? article.source;
 
   const Title = (
