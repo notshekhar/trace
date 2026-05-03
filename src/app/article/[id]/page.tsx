@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { PageShell } from "@/components/layout/PageShell";
 import { ArticleEntry } from "@/components/edition/ArticleEntry";
+import { ArticleMoreCard } from "@/components/edition/ArticleMoreCard";
 import { TrendingSidebar } from "@/components/edition/TrendingSidebar";
 import { HotLinks } from "@/components/edition/HotLinks";
 import { ArchiveCta } from "@/components/edition/ArchiveCta";
+import { BackButton } from "@/components/nav/BackButton";
 import { getArticle, getTodayEditionDate } from "@/lib/api";
 
 export const revalidate = 3600;
@@ -45,7 +46,7 @@ export default async function ArticlePage({ params }: Props) {
   const payload = await getArticle(id);
   if (!payload) notFound();
 
-  const { article, rest, trending, hotLinks } = payload;
+  const { article, rest: moreStories, trending, hotLinks } = payload;
   const isToday = article.editionDate === getTodayEditionDate();
   const backHref = isToday ? "/" : `/edition/${article.editionDate}`;
   const backLabel = isToday ? "today" : formatLongDate(article.editionDate);
@@ -56,25 +57,28 @@ export default async function ArticlePage({ params }: Props) {
       aside={<TrendingSidebar articles={trending} title="Most popular" />}
     >
       <div className="pb-6">
-        <Link
-          href={backHref}
-          className="inline-flex items-center gap-1.5 text-[12px] text-muted hover:text-foreground transition-colors"
-        >
-          <span aria-hidden>←</span> Back to {backLabel}
-        </Link>
+        <BackButton fallbackHref={backHref} fallbackLabel={backLabel} />
       </div>
 
       <ArticleEntry article={article} variant="lead" linked={false} />
 
-      {rest.length > 0 && (
-        <div className="flex flex-col">
-          {rest.map((next) => (
-            <div key={next.id}>
-              <hr className="my-10 border-0 border-t border-rule" />
-              <ArticleEntry article={next} variant="next" linked />
-            </div>
-          ))}
-        </div>
+      {moreStories.length > 0 && (
+        <section className="mt-14">
+          <div className="flex items-baseline justify-between border-b border-rule pb-3 mb-6">
+            <p className="eyebrow">More in this edition</p>
+            <span className="text-[11px] text-subtle tabular-nums">
+              {moreStories.length}{" "}
+              {moreStories.length === 1 ? "story" : "stories"}
+            </span>
+          </div>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-7">
+            {moreStories.map((a) => (
+              <li key={a.id}>
+                <ArticleMoreCard article={a} />
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <ArchiveCta />

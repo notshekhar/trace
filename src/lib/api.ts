@@ -43,6 +43,7 @@ export interface EditionPayload {
 
 export interface ArticlePayload {
     article: Article;
+    /** Up to 10 other stories from the same edition (API capped). */
     rest: Article[];
     trending: Article[];
     hotLinks: HotLink[];
